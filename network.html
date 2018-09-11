@@ -43,7 +43,7 @@ d3.json("graph.json").then(function(graph) {
     .data(graph.nodes)
     .enter().append("circle")
       .attr("r", node_diameter)
-//	  .style("fill", function(graph){var output = d3.schemeCategory10[Math.floor(Math.random(5)*graph.nodes.value/10)];
+	  .style("fill", function(d){console.log(d.group); return d3.schemeCategory10[d.group]})
 //console.log(graph.nodes.value);	  
 //return output})
 	 // .style("opacity", 0.2)
