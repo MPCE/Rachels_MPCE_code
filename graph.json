@@ -35,7 +35,6 @@
 	  {"source": "stn_letter", "target": "person", "value": 1},
 	{"source": "stn_letter", "target": "place", "value": 1},
 	{"source": "stn_letter", "target": "archive_ref", "value": 1},
-	
 	{"source": "bastille_register_record", "target": "archive_ref", "value": 1},
 	{"source": "banned_books_list_record", "target": "archive_ref", "value": 1},
 	{"source": "Darnton_record", "target": "archive_ref", "value": 1},
@@ -44,7 +43,6 @@
 	{"source": "condemnation", "target": "archive_ref", "value": 1},
 	{"source": "permission_simple_grant", "target": "archive_ref", "value": 1},
 	{"source": "confiscation", "target": "archive_ref", "value": 1},
-	
 	{"source": "stn_order", "target": "place", "value": 1},
 	{"source": "stn_order", "target": "person", "value": 1},
 	{"source": "stn_order", "target": "edition", "value": 1},
@@ -62,7 +60,6 @@
 	{"source": "permission_simple_grant", "target": "edition", "value": 1},
 	{"source": "confiscation", "target": "person", "value": 1},
 	{"source": "confiscation", "target": "place", "value": 1},
-	
     {"source": "banned_books_list_record", "target": "super_book", "value": 1}
   ]
 }
