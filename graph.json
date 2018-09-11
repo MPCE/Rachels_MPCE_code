@@ -1,163 +1,68 @@
-<!DOCTYPE html>
-<head>
-  <meta charset="utf-8">
-
-  <style>
-  </style>
-</head>
-
-<body>
-  <h1>Force Directed layout</h1>
-  <svg 
-    width=800 
-    height=400
-    id="network"></svg>
-  
-    <script src="https://d3js.org/d3.v4.min.js"></script>
-  <script>
-    // Copy drag from: https://bl.ocks.org/mbostock/4062045
-    
-    let svg = d3.select("#network"),
-        width = +svg.attr("width"),
-        height = + svg.attr("height"),
-        N = 100,
-        r = d3.scaleSqrt()
-    			.domain([0, 50])
-    			.range([1, 15]);
-    
-    let nodes = [
-      {name:"John", age:23},
-      {name:"Edwin", age:25},
-      {name:"Santi", age:25},
-      {name:"Eliza", age:22},      
-      {name:"Magda", age:32},            
-      {name:"Vicente", age:43},                  
-      {name:"Sonia", age:44}                            
-    ]
-    
-    let links = [
-      {source:"John", target:"Vicente"},
-      {source:"Edwin", target:"Vicente"},
-      {source:"Santi", target:"Edwin"},
-      {source:"Eliza", target:"Vicente"},
-      {source:"Magda", target:"Vicente"},      
-      {source:"John", target:"Sonia"},
-      {source:"Edwin", target:"Sonia"},
-      {source:"Eliza", target:"Sonia"},
-      
-    ]
-    console.log(width, height);
-    
-    let simulation = d3.forceSimulation(nodes)
-    	.force("center", d3.forceCenter(width/2, height/2))
-    	.force("charge", d3.forceManyBody().strength(-50))
-    	.force("collide", d3.forceCollide(d => r(d.age) + 1))
-    	.force("link", d3.forceLink(links)
-            	.id((d) => d.name)
-             .distance(100))
-    
-    	.on("tick", ticked);
-    	
-    
-    console.log("nodes", nodes);
-    console.log("links", links);    
-    
-    
-    let sellinks = svg.selectAll(".link")
-    	.data(links)
-    	.enter()
-    	.append("line")
-    	.attr("class", "link")
-      .style("stroke", "#aaa")
-      .style("opacity", 0.9)
-    
-    let selnodes = svg.selectAll(".node")
-    	.data(nodes)
-    	.enter()
-    	.append("circle")
-    	.attr("class", "node")
-      .style("fill", "steelblue")
-      .attr("r", d => r(d.age))
-      .call(d3.drag()
-            .on("start", dragstarted)
-            .on("drag", dragged)
-            .on("end", dragended));
-
-    selnodes.append("title")
-    	.text(d => d.name);
-    	
-
-   function ticked() {
-			sellinks.attr("x1", (l) => l.source.x)
-        .attr("y1", (l) => l.source.y)
-        .attr("x2", (l) => l.target.x)
-        .attr("y2", (l) => l.target.y);
-
-      selnodes.attr("cx", (d) => d.x)
-	      .attr("cy", (d) => d.y);
-   }// ticked
-    
-function dragstarted(d) {
-  if (!d3.event.active) simulation.alphaTarget(0.3).restart();
-  d.fx = d.x;
-  d.fy = d.y;
+{
+  "nodes": [
+   {"id": "person", "group": 1},
+    {"id": "profession", "group": 1},
+    {"id": "super_book", "group": 1},
+    {"id": "fbtee_keyword", "group": 1},
+    {"id": "archive_ref", "group": 1},
+    {"id": "stn_letter", "group": 1},
+    {"id": "stn_order", "group": 1},
+	{"id": "place", "group": 1},
+    {"id": "parisian_stock_sale", "group": 1},
+	{"id": "parisian_keyword", "group": 1},
+	{"id": "tag", "group": 1},
+    {"id": "confiscation", "group": 1},
+    {"id": "permission_simple_grant", "group": 2},
+	{"id": "edition", "group": 2},
+    {"id": "condemnation", "group": 3},
+    {"id": "enstampillage_record", "group": 2},
+    {"id": "MMF_2_record", "group": 2},
+	{"id": "Darnton_record", "group": 2},
+	{"id": "banned_books_list_record", "group": 2},
+	{"id": "provincial_inspection", "group": 2},
+	{"id": "bastille_register_record", "group": 2}
+  ],
+  "links": [
+	{"source": "bastille_register_record", "target": "super_book", "value": 1},
+	 {"source": "Darnton_record", "target": "super_book", "value": 1},
+	 {"source": "super_book", "target": "fbtee_keyword", "value": 1},
+	 {"source": "super_book", "target": "parisian_keyword", "value": 1},
+	 {"source": "fbtee_keyword", "target": "tag", "value": 1},
+	 {"source": "fbtee_keyword", "target": "person", "value": 1},
+	  {"source": "fbtee_keyword", "target": "place", "value": 1},
+	  {"source": "person", "target": "profession", "value": 1},
+	  {"source": "person", "target": "person", "value": 1},
+	  {"source": "stn_letter", "target": "person", "value": 1},
+	{"source": "stn_letter", "target": "place", "value": 1},
+	{"source": "stn_letter", "target": "archive_ref", "value": 1},
+	
+	{"source": "bastille_register_record", "target": "archive_ref", "value": 1},
+	{"source": "banned_books_list_record", "target": "archive_ref", "value": 1},
+	{"source": "Darnton_record", "target": "archive_ref", "value": 1},
+	{"source": "edition", "target": "archive_ref", "value": 1},
+	{"source": "enstampillage_record", "target": "archive_ref", "value": 1},
+	{"source": "condemnation", "target": "archive_ref", "value": 1},
+	{"source": "permission_simple_grant", "target": "archive_ref", "value": 1},
+	{"source": "confiscation", "target": "archive_ref", "value": 1},
+	
+	{"source": "stn_order", "target": "place", "value": 1},
+	{"source": "stn_order", "target": "person", "value": 1},
+	{"source": "stn_order", "target": "edition", "value": 1},
+	{"source": "provincial_inspection", "target": "person", "value": 1},
+	{"source": "provincial_inspection", "target": "edition", "value": 1},
+	{"source": "provincial_inspection", "target": "place", "value": 1},
+	{"source": "parisian_stock_sale", "target": "place", "value": 1},
+	{"source": "parisian_stock_sale", "target": "edition", "value": 1},
+	{"source": "parisian_stock_sale", "target": "person", "value": 1},
+	{"source": "edition", "target": "person", "value": 1},
+	{"source": "edition", "target": "super_book", "value": 1},
+	{"source": "MMF_2_record", "target": "edition", "value": 1},
+	{"source": "enstampillage_record", "target": "edition", "value": 1},
+	{"source": "condemnation", "target": "edition", "value": 1},
+	{"source": "permission_simple_grant", "target": "edition", "value": 1},
+	{"source": "confiscation", "target": "person", "value": 1},
+	{"source": "confiscation", "target": "place", "value": 1},
+	
+    {"source": "banned_books_list_record", "target": "super_book", "value": 1}
+  ]
 }
-
-function dragged(d) {
-  d.fx = d3.event.x;
-  d.fy = d3.event.y;
-}
-
-function dragended(d) {
-  if (!d3.event.active) simulation.alphaTarget(0);
-  d.fx = null;
-  d.fy = null;
-}
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-
-  </script>
-</body>
