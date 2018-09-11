@@ -40,7 +40,7 @@ redraw(); // Draw svg for the first time to initialize.
       window.addEventListener("resize", redraw);
 
 
-const node_diameter=chartDiv.clientWidth/20;
+const node_diameter=chartDiv.clientWidth/10;
 
 var svg = d3.select("svg"),
     width = +svg.attr("width"),
@@ -72,7 +72,6 @@ d3.json("graph.json").then(function(graph) {
 	.attr("rx", 10)         // set the x corner curve radius
     .attr("ry", 10)        // set the y corner curve radius
 	.style("fill", function(d){return d3.schemeCategory10[d.group]})
-	 // .style("opacity", 0.2)
       .call(d3.drag()
           .on("start", dragstarted)
           .on("drag", dragged)
@@ -85,7 +84,9 @@ var label = g.selectAll(".mytext")
     .text(function (d) { return d.label; })
     .style("text-anchor", "middle")
     .style("fill", "white")
-    .style("font-size", "1em");
+  //  .style("font-size", "1em");
+	.style("font-size", function() { 
+          return node_diameter / this.getComputedTextLength()*10 + "px"; });
 	
 		  
 		  
