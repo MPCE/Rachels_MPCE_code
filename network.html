@@ -30,7 +30,7 @@
 <div id="chart"></div>
 
 <script>
-
+var colour = d3.scaleOrdinal(d3.schemeCategory10);
 var chartDiv= document.getElementById("chart");
 var svg = d3.select(chartDiv).append("svg");
 		  
@@ -53,12 +53,9 @@ var simulation = d3.forceSimulation()
 
 d3.json("graph.json").then(function(graph) {
 
-  var link = svg.append("g")
-    .attr("class", "links")
-    .selectAll("line")
-    .data(graph.links)
-    .enter().append("line")
-	.style("stroke-width", 5);
+var gLink = svg.append("g");
+
+ 
 
 	var g = svg.append("g");
 	
@@ -71,11 +68,33 @@ d3.json("graph.json").then(function(graph) {
 	.attr("height", node_diameter*2/3) //for no good reason
 	.attr("rx", 10)         // set the x corner curve radius
     .attr("ry", 10)        // set the y corner curve radius
+	.attr("node_colour", function(d){return d3.schemeCategory10[d.group]})
 	.style("fill", function(d){return d3.schemeCategory10[d.group]})
-      .call(d3.drag()
+	.each(d => {
+      d.dom_id = "node-" + d.id;
+	  })
+	.attr("id", d => d.dom_id)
+    .call(d3.drag()
           .on("start", dragstarted)
           .on("drag", dragged)
           .on("end", dragended));
+		  
+	
+		
+var link = gLink.attr("class", "links")
+    .selectAll("line")
+    .data(graph.links)
+    .enter().append("line")
+	.style("stroke-width", chartDiv.clientWidth/200)
+//	.style("stroke-opacity", .6)
+	;
+
+	 link.style("stroke", d => {
+    return d3.select(`#node-${d.source}`).attr("node_colour");
+  })
+  .attr('marker-end', function(d) {return marker(d3.select(`#node-${d.source}`).attr("node_colour"))})
+  ;
+		  
 
 var label = g.selectAll(".mytext")
 	.data(graph.nodes)
@@ -84,11 +103,18 @@ var label = g.selectAll(".mytext")
     .text(function (d) { return d.label; })
     .style("text-anchor", "middle")
     .style("fill", "white")
-  //  .style("font-size", "1em");
 	.style("font-size", function() { 
           return node_diameter / this.getComputedTextLength()*10 + "px"; });
 	
-		  
+var link_label = gLink.selectAll(".linkText")
+	.data(graph.links)
+	.enter()
+	.append("text")
+	.text(function (d) { return d.label; })
+	.style("text-anchor", "middle")
+	.style("fill", "gray")
+	.style("font-size", "0.6em");
+
 		  
   node.append("title")
       .text(function(d) { return d.label; });
@@ -113,6 +139,14 @@ var label = g.selectAll(".mytext")
 		
 	label.attr("x", function(d){ return d.x +node_diameter/2; })
     	.attr("y", function (d) {return d.y + node_diameter*2/6; });
+		
+	link_label
+			.attr("x", function(d) {
+        	return ((d.source.x + d.target.x)/2);
+    		})
+      	.attr("y", function(d) {
+        	return ((d.source.y + d.target.y)/2);
+        });
   }
 });
 
@@ -142,6 +176,27 @@ function redraw(){
           .attr("width", width)
           .attr("height", height);
 		  }
+		  
+function marker(colour){
+
+svg.append('marker')
+        .attr('id', colour.replace("#", ""))
+         .attr('viewBox','-0 -5 10 10')
+         .attr('refX',30)
+         .attr('refY',0)
+        .attr('orient','auto')
+        .attr('markerWidth',node_diameter/30)
+         .attr('markerHeight',node_diameter/30)
+         .attr('xoverflow','visible')
+        .append('svg:path')
+        .attr('d', 'M 0,-5 L 10 ,0 L 0,5')
+		//.style("opacity", .6)
+        .style("fill", colour)
+        .style('stroke','none');
+		//console.log("url("+ colour + ")");
+	return ("url("+ colour + ")");
+
+}
 		  
 </script>
 </body>
