@@ -60,24 +60,38 @@ d3.json("graph.json").then(function(graph) {
     .enter().append("line")
 	.style("stroke-width", 5);
 
-  var node = svg.append("g")
-     .attr("class", "nodes")
-    .selectAll("rect")
+	var g = svg.append("g");
+	
+  var node = g.selectAll("rect")
     .data(graph.nodes)
-    .enter().append("rect")
+    .enter().append("g")
+	.attr("class", "node")
+	.append("rect")
     .attr("width", node_diameter)
 	.attr("height", node_diameter*2/3) //for no good reason
 	.attr("rx", 10)         // set the x corner curve radius
     .attr("ry", 10)        // set the y corner curve radius
-	.style("fill", function(d){console.log(d.group); return d3.schemeCategory10[d.group]})
+	.style("fill", function(d){return d3.schemeCategory10[d.group]})
 	 // .style("opacity", 0.2)
       .call(d3.drag()
           .on("start", dragstarted)
           .on("drag", dragged)
           .on("end", dragended));
 
+var label = g.selectAll(".mytext")
+	.data(graph.nodes)
+    .enter()
+    .append("text")
+    .text(function (d) { return d.label; })
+    .style("text-anchor", "middle")
+    .style("fill", "white")
+    .style("font-size", "1em");
+	
+	//see here for sizing text labels: https://bl.ocks.org/RobinL/8174dec97312214594084755f6f65096
+		  
+		  
   node.append("title")
-      .text(function(d) { return d.id; });
+      .text(function(d) { return d.label; });
 
   simulation
       .nodes(graph.nodes)
@@ -96,6 +110,9 @@ d3.json("graph.json").then(function(graph) {
     node
         .attr("x", function(d) { return d.x; })
         .attr("y", function(d) { return d.y; });
+		
+	label.attr("x", function(d){ return d.x +node_diameter/2; })
+    	.attr("y", function (d) {return d.y + node_diameter*2/6; });
   }
 });
 
