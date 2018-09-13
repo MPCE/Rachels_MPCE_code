@@ -9,8 +9,6 @@
 
 .nodes circle {
   pointer-events: all;
-  stroke: none;
-  stroke-width: 40px;
 }
 
 
@@ -40,8 +38,7 @@ redraw(); // Draw svg for the first time to initialize.
       window.addEventListener("resize", redraw);
 
 
-const radius=chartDiv.clientWidth/30; //this is the x value (width)
-//const node_height = radius*2/3; //this is the y value (height)
+const radius=chartDiv.clientWidth/40; 
 
 var svg = d3.select("svg"),
     width = +svg.attr("width"),
@@ -49,7 +46,7 @@ var svg = d3.select("svg"),
 
 var simulation = d3.forceSimulation()
     .force("link", d3.forceLink().id(function(d) { return d.id; }))
-    .force("charge", d3.forceManyBody().strength(radius*-40))
+    .force("charge", d3.forceManyBody().strength(radius*-100))
     .force("center", d3.forceCenter(width / 2, height / 2));
 
 d3.json("graph.json").then(function(graph) {
@@ -65,10 +62,17 @@ var gLink = svg.append("g");
     .enter().append("g")
 	.attr("class", "node")
 	.append("circle")
-    .attr("r", function(d){ //can put other code here when you size circles differently
-	d.radius = radius; 
-	return d.radius;})
+    .attr("r", function(d) {      
+     d.weight = graph.links.filter(function(l) {
+       return l.source == d.id || l.target == d.id
+     }).length;      
+     var minRadius = radius; //this sets the minimum as proportional to the page
+     d.radius = minRadius + (d.weight * 2);
+	 return d.radius;
+   })
 	.attr("node_colour", function(d){return d3.schemeCategory10[d.group]})
+	.style("stroke", "white")
+	.style("stroke-width", 2)
 	//.style("opacity", 0.4)
 	.style("fill", function(d){return d3.schemeCategory10[d.group]})
 	.each(d => {
@@ -86,7 +90,7 @@ var link = gLink.attr("class", "links")
     .selectAll("path")
     .data(graph.links)
     .enter().append("path")
-	.style("stroke-width", chartDiv.clientWidth/200)
+	.style("stroke-width", chartDiv.clientWidth/300)
 //	.style("stroke-opacity", .6)
 	;
 //define the link colours and arrows
@@ -104,13 +108,14 @@ var label = g.selectAll(".mytext")
     .text(function (d) { return d.label; })
     .style("text-anchor", "middle")
     .style("fill", "white")
-	.style("font-size", function() { 
-          return radius*2 / this.getComputedTextLength()*10 + "px"; });
+	.style("font-size", function(d) { 
+          return d.radius*2 / this.getComputedTextLength()*10 + "px"; });
 
 	//define content of link labels
 link.append("title")
 	.text(function(d) {return d.label});
-	
+
+/* //THIS BIT CREATES ACTUAL LINK LABELS	
 //define and create the line for that labels will follow for edges 
 var edgepaths = gLink.selectAll(".edgepath")
 	.data(graph.links)
@@ -130,7 +135,7 @@ edgelabels = gLink.selectAll(".edgelabel")
     .style("pointer-events", "none")
 	.attr("class", "edgelabel")
 	.attr("id", function(d, i){return 'edgelabel' + i})
-	.style("font-size", "0.6em")
+	.style("font-size", "1em")
 	.attr("fill", "dark gray");
 	
 	
@@ -142,8 +147,10 @@ edgelabels.append('textPath')
 		//.attr("x", 0)
 		//.attr("dy", 100)
 		.text(function (d) { return d.label; });
+		//.call(wrap, 20);
 
-		  
+	*/
+	
   node.append("title")
       .text(function(d) { return d.label; });
 
@@ -155,16 +162,13 @@ edgelabels.append('textPath')
       .links(graph.links);
 
   function ticked() {
-  
-  
+
     link.attr('d', function (d) {
-	// Total difference in x and y from source to target
-      var diffX = d.target.x - d.source.x;
+	
+	var pathLength = get_pathlength(d);
+	
+	var diffX = d.target.x - d.source.x;
       var diffY = d.target.y - d.source.y;
-
-      // Length of path from center of source node to center of target node
-      var pathLength = Math.sqrt((diffX * diffX) + (diffY * diffY));
-
      // x and y distances from center to outside edge of target node
      var offsetX = (diffX * d.target.radius) / pathLength;
 	// console.log(offsetX);
@@ -174,12 +178,14 @@ edgelabels.append('textPath')
      return "M" + d.source.x + "," + d.source.y + "L" + (d.target.x - offsetX) + "," + (d.target.y - offsetY);
         });
 
-    node
-        .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+    node 
+		.attr("cx", function(d) { return d.x = Math.max(radius, Math.min(chartDiv.clientWidth - radius, d.x)); })
+        .attr("cy", function(d) { return d.y = Math.max(radius, Math.min(chartDiv.clientHeight - radius, d.y)); });
+
 		
 	label.attr("x", function(d){ return d.x})
     	.attr("y", function (d) {return d.y });
-		
+/*		
 	edgelabels
 	.attr('transform', function (d) {
             if (d.target.x < d.source.x) {
@@ -194,12 +200,11 @@ edgelabels.append('textPath')
         });
 		
 	edgepaths.attr('d', function (d) {
-	// Total difference in x and y from source to target
-      var diffX = d.target.x - d.source.x;
-      var diffY = d.target.y - d.source.y;
 
       // Length of path from center of source node to center of target node
-      var pathLength = Math.sqrt((diffX * diffX) + (diffY * diffY));
+      var pathLength = get_pathlength(d);
+	  var diffX = d.target.x - d.source.x;
+      var diffY = d.target.y - d.source.y;
 
      // x and y distances from center to outside edge of target node
      var offsetX = (diffX * d.target.radius) / pathLength;
@@ -209,7 +214,7 @@ edgelabels.append('textPath')
 		
      return "M" + d.source.x + "," + d.source.y + "L" + (d.target.x - offsetX) + "," + (d.target.y - offsetY);
         });
-
+*/
   }
 });
 
@@ -226,8 +231,8 @@ function dragged(d) {
 
 function dragended(d) {
   if (!d3.event.active) simulation.alphaTarget(0);
-  d.fx = null;
-  d.fy = null;
+  d.fx = d.x;
+  d.fy = d.y;
 }
 
 function redraw(){
@@ -260,6 +265,49 @@ svg.append('marker')
 	return ("url("+ colour + ")");
 
 }
+/*
+function wrap(text, width) {
+    text.each(function () {
+        var text = d3.select(this),
+            words = text.text().split(/\s+/).reverse(),
+            word,
+            line = [],
+            lineNumber = 0,
+            lineHeight = 0.6, // ems
+            x = text.attr("x"),
+            y = text.attr("y"),
+            dy = 0, //parseFloat(text.attr("dy")),
+            tspan = text.text(null)
+                        .append("tspan")
+                        .attr("x", x)
+                        .attr("y", y)
+                        .attr("dy", dy + "em");
+        while (word = words.pop()) {
+            line.push(word);
+            tspan.text(line.join(" "));
+            if (tspan.node().getComputedTextLength() > width) {
+                line.pop();
+                tspan.text(line.join(""));
+                line = [word];
+                tspan = text.append("tspan")
+                            .attr("x", x)
+                            .attr("y", y)
+                            .attr("dy", ++lineNumber * lineHeight + dy + "em")
+                            .text(word);
+            }
+        }
+    });
+}
+*/
+function get_pathlength(data){
+// Total difference in x and y from source to target
+      var diffX = data.target.x - data.source.x;
+      var diffY = data.target.y - data.source.y;
+
+      // Length of path from center of source node to center of target node
+      return Math.sqrt((diffX * diffX) + (diffY * diffY));
+	  }
+
 		  
 </script>
 </body>
