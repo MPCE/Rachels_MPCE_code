@@ -7,7 +7,7 @@
   stroke: #aaa;
 }
 
-.nodes rect {
+.nodes circle {
   pointer-events: all;
   stroke: none;
   stroke-width: 40px;
@@ -40,7 +40,8 @@ redraw(); // Draw svg for the first time to initialize.
       window.addEventListener("resize", redraw);
 
 
-const node_diameter=chartDiv.clientWidth/10;
+const radius=chartDiv.clientWidth/30; //this is the x value (width)
+//const node_height = radius*2/3; //this is the y value (height)
 
 var svg = d3.select("svg"),
     width = +svg.attr("width"),
@@ -48,7 +49,7 @@ var svg = d3.select("svg"),
 
 var simulation = d3.forceSimulation()
     .force("link", d3.forceLink().id(function(d) { return d.id; }))
-    .force("charge", d3.forceManyBody().strength(node_diameter*-40))
+    .force("charge", d3.forceManyBody().strength(radius*-40))
     .force("center", d3.forceCenter(width / 2, height / 2));
 
 d3.json("graph.json").then(function(graph) {
@@ -59,16 +60,16 @@ var gLink = svg.append("g");
 
 	var g = svg.append("g");
 	
-  var node = g.selectAll("rect")
+  var node = g.selectAll("circle")
     .data(graph.nodes)
     .enter().append("g")
 	.attr("class", "node")
-	.append("rect")
-    .attr("width", node_diameter)
-	.attr("height", node_diameter*2/3) //for no good reason
-	.attr("rx", 10)         // set the x corner curve radius
-    .attr("ry", 10)        // set the y corner curve radius
+	.append("circle")
+    .attr("r", function(d){ //can put other code here when you size circles differently
+	d.radius = radius; 
+	return d.radius;})
 	.attr("node_colour", function(d){return d3.schemeCategory10[d.group]})
+	//.style("opacity", 0.4)
 	.style("fill", function(d){return d3.schemeCategory10[d.group]})
 	.each(d => {
       d.dom_id = "node-" + d.id;
@@ -80,22 +81,22 @@ var gLink = svg.append("g");
           .on("end", dragended));
 		  
 	
-		
+//define the links
 var link = gLink.attr("class", "links")
-    .selectAll("line")
+    .selectAll("path")
     .data(graph.links)
-    .enter().append("line")
+    .enter().append("path")
 	.style("stroke-width", chartDiv.clientWidth/200)
 //	.style("stroke-opacity", .6)
 	;
-
+//define the link colours and arrows
 	 link.style("stroke", d => {
     return d3.select(`#node-${d.source}`).attr("node_colour");
   })
   .attr('marker-end', function(d) {return marker(d3.select(`#node-${d.source}`).attr("node_colour"))})
   ;
 		  
-
+//define and add the labels for NODES
 var label = g.selectAll(".mytext")
 	.data(graph.nodes)
     .enter()
@@ -104,16 +105,43 @@ var label = g.selectAll(".mytext")
     .style("text-anchor", "middle")
     .style("fill", "white")
 	.style("font-size", function() { 
-          return node_diameter / this.getComputedTextLength()*10 + "px"; });
+          return radius*2 / this.getComputedTextLength()*10 + "px"; });
+
+	//define content of link labels
+link.append("title")
+	.text(function(d) {return d.label});
 	
-var link_label = gLink.selectAll(".linkText")
+//define and create the line for that labels will follow for edges 
+var edgepaths = gLink.selectAll(".edgepath")
 	.data(graph.links)
 	.enter()
-	.append("text")
-	.text(function (d) { return d.label; })
-	.style("text-anchor", "middle")
-	.style("fill", "gray")
-	.style("font-size", "0.6em");
+	.append("path")
+	.attr("class", "edgepath")
+	.attr("fill-opacity", 0)
+	.attr("stroke-opacity", 0)
+	.attr("id", function(d, i) {return 'edgepath' + i})
+	.style("pointer-events", "none");
+	
+	//define the actual labels for edges
+edgelabels = gLink.selectAll(".edgelabel")
+	.data(graph.links)
+    .enter()
+    .append('text')
+    .style("pointer-events", "none")
+	.attr("class", "edgelabel")
+	.attr("id", function(d, i){return 'edgelabel' + i})
+	.style("font-size", "0.6em")
+	.attr("fill", "dark gray");
+	
+	
+edgelabels.append('textPath')
+		.attr('xlink:href', function (d, i) {return '#edgepath' + i})
+		.style("text-anchor", "middle")
+        .style("pointer-events", "none")
+        .attr("startOffset", "50%")
+		//.attr("x", 0)
+		//.attr("dy", 100)
+		.text(function (d) { return d.label; });
 
 		  
   node.append("title")
@@ -127,26 +155,61 @@ var link_label = gLink.selectAll(".linkText")
       .links(graph.links);
 
   function ticked() {
-    link
-        .attr("x1", function(d) { return d.source.x +node_diameter/2; })
-        .attr("y1", function(d) { return d.source.y + node_diameter*2/6; })
-        .attr("x2", function(d) { return d.target.x + node_diameter/2; })
-        .attr("y2", function(d) { return d.target.y + node_diameter*2/6; });
+  
+  
+    link.attr('d', function (d) {
+	// Total difference in x and y from source to target
+      var diffX = d.target.x - d.source.x;
+      var diffY = d.target.y - d.source.y;
+
+      // Length of path from center of source node to center of target node
+      var pathLength = Math.sqrt((diffX * diffX) + (diffY * diffY));
+
+     // x and y distances from center to outside edge of target node
+     var offsetX = (diffX * d.target.radius) / pathLength;
+	// console.log(offsetX);
+     var offsetY = (diffY * d.target.radius) / pathLength;
+	// console.log(offsetY);
+		
+     return "M" + d.source.x + "," + d.source.y + "L" + (d.target.x - offsetX) + "," + (d.target.y - offsetY);
+        });
 
     node
-        .attr("x", function(d) { return d.x; })
-        .attr("y", function(d) { return d.y; });
+        .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
 		
-	label.attr("x", function(d){ return d.x +node_diameter/2; })
-    	.attr("y", function (d) {return d.y + node_diameter*2/6; });
+	label.attr("x", function(d){ return d.x})
+    	.attr("y", function (d) {return d.y });
 		
-	link_label
-			.attr("x", function(d) {
-        	return ((d.source.x + d.target.x)/2);
-    		})
-      	.attr("y", function(d) {
-        	return ((d.source.y + d.target.y)/2);
+	edgelabels
+	.attr('transform', function (d) {
+            if (d.target.x < d.source.x) {
+                var bbox = this.getBBox();
+                rx = bbox.x + bbox.width / 2;
+                ry = bbox.y + bbox.height / 2;
+                return 'rotate(180 ' + rx + ' ' + ry + ')';
+            }
+            else {
+                return 'rotate(0)';
+            }
         });
+		
+	edgepaths.attr('d', function (d) {
+	// Total difference in x and y from source to target
+      var diffX = d.target.x - d.source.x;
+      var diffY = d.target.y - d.source.y;
+
+      // Length of path from center of source node to center of target node
+      var pathLength = Math.sqrt((diffX * diffX) + (diffY * diffY));
+
+     // x and y distances from center to outside edge of target node
+     var offsetX = (diffX * d.target.radius) / pathLength;
+	// console.log(offsetX);
+     var offsetY = (diffY * d.target.radius) / pathLength;
+	// console.log(offsetY);
+		
+     return "M" + d.source.x + "," + d.source.y + "L" + (d.target.x - offsetX) + "," + (d.target.y - offsetY);
+        });
+
   }
 });
 
@@ -182,11 +245,11 @@ function marker(colour){
 svg.append('marker')
         .attr('id', colour.replace("#", ""))
          .attr('viewBox','-0 -5 10 10')
-         .attr('refX',30)
+         .attr('refX',radius/4)
          .attr('refY',0)
         .attr('orient','auto')
-        .attr('markerWidth',node_diameter/30)
-         .attr('markerHeight',node_diameter/30)
+        .attr('markerWidth',radius/10)
+         .attr('markerHeight',radius/10)
          .attr('xoverflow','visible')
         .append('svg:path')
         .attr('d', 'M 0,-5 L 10 ,0 L 0,5')
