@@ -56,7 +56,7 @@
 	{"source": "edition", "target": "super_book", "value": 1, "label": "exemplifies"},
 	{"source": "MMF_2_record", "target": "edition", "value": 1, "label": "refers to"},
 	{"source": "enstampillage_record", "target": "edition", "value": 1, "label": "stamps"},
-	{"source": "condemnation", "target": "edition", "value": 1, "label": "condems"},
+	{"source": "condemnation", "target": "edition", "value": 1, "label": "condemns"},
 	{"source": "permission_simple_grant", "target": "edition", "value": 1, "label": "permits"},
 	{"source": "confiscation", "target": "person", "value": 3, "label": "signed for by or censored by or confiscated from"},
 	{"source": "confiscation", "target": "edition", "value": 1, "label": "confiscates"},
