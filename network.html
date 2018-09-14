@@ -45,14 +45,14 @@ border-style: solid;
 			<div class = "col-md-4"><button type = "button" onclick ="ClearFields();" id = "reset_getbox">reset</button></div>
 			</div>
 			<div class = "row">
-			<div class = "col-md-6">that </div><div class = "col-md-6" id = "relationship"></div>
+			<div class = "col-md-6 text-md-right">that </div><div class = "col-md-6 text-md-left" id = "relationship"></div>
 			</div>
 			<div class = "row">
 			<div class = "col-md-8">
 			<input id = "wherebox" filled = "false"></input></div>
 			<div class = "col-md-4"><button type = "button" onclick ="ClearSingleField();" id = "reset_getbox">reset</button></div>
 			</div> 
-			<div>=</div> 
+			<div>&mdash;specifically</div> 
 			<select id = "selection" filled="false"><option></option></select>
 			</div>
 		</div>
@@ -63,6 +63,8 @@ border-style: solid;
 
 <script src="d3.js"></script>
 <script>
+
+
 
 var boxes = ["#getbox", "#wherebox"];
 var colour = d3.scaleOrdinal(d3.schemeCategory10);
@@ -78,6 +80,10 @@ const radius=chartDiv.clientWidth/40;
  svg = d3.select("svg"),
     width = +svg.attr("width"),
     height = +svg.attr("height");
+	
+const theZoom = d3.zoom()
+    .scaleExtent([0.1, 3])
+    .on("zoom", zoomed);
 
 var simulation = d3.forceSimulation()
     .force("link", d3.forceLink().id(function(d) { return d.id; }))
@@ -90,11 +96,11 @@ var simulation = d3.forceSimulation()
 
 d3.json("graph.json").then(function(graph) {
 
-var gLink = svg.append("g");
+var gLink = svg.append("g").attr("id", "gLink");
 
  
 
-	var g = svg.append("g");
+	var g = svg.append("g").attr("id", "otherg");
 	
   var node = g.selectAll("circle")
     .data(graph.nodes)
@@ -119,16 +125,23 @@ var gLink = svg.append("g");
 	  })
 	.attr("id", d => d.dom_id)
 	.on("mouseover", function(d){
+		//makes all (other) circles gray
+		d3.selectAll("circle").style("fill", "dimgray");
 		d3.select(this) //  turns this circle's outline blue
-			.style("stroke", "blue");
+			.style("stroke", "blue").style("fill", function(d){return d3.schemeCategory10[d.group]});
+		
+		//make links gray
+		link.style("stroke", "gray").style("opacity", 0.3);
+			
 	  //gets other connected nodes and makes blue 
 		for(let i = 0; i<graph.links.length; i++){
 			if (d.id===graph.links[i].source.id){
-				d3.select(`#node-${graph.links[i].target.id}`).style("stroke", "blue");
-				console.log(`#link-${d.id}`);
+				d3.select(`#node-${graph.links[i].target.id}`).style("stroke", "blue").style("fill", function(d){return d3.schemeCategory10[d.group]});
+				
 				//turn the lines blue too
+				
 				d3.selectAll(`.${d.dom_id.replace(/node-/, "link-")}`).style(
-        "stroke","blue");
+        "stroke","blue").style("opacity", 1);
 			}
 		}
 	//fade out other stuff	
@@ -137,10 +150,10 @@ var gLink = svg.append("g");
 	.on("mouseout", function(d){
 	d3.select(this)
 		.style("stroke", "black");
-	g.selectAll("circle").style("stroke", "black");
+	g.selectAll("circle").style("stroke", "black").style("fill", function(d){return d3.schemeCategory10[d.group]});
 	 link.style("stroke", d => {
 		return d3.select(`#node-${d.source.id}`).attr("node_colour");
-		});
+		}).style("opacity", 1);
 	})
 	
 	.on("click", function(d){
@@ -151,6 +164,7 @@ var gLink = svg.append("g");
 		UpdateBox("#wherebox", d, graph);
 		}
 	})
+	.on("mousedown", () => d3.event.stopPropagation)
     .call(d3.drag()
           .on("start", dragstarted)
           .on("drag", dragged)
@@ -196,6 +210,8 @@ var label = g.selectAll(".mytext")
 	//define content of link labels
 link.append("title")
 	.text(function(d) {return d.label});
+	
+
 
 /* //THIS BIT CREATES ACTUAL LINK LABELS	
 //define and create the line for that labels will follow for edges 
@@ -236,6 +252,8 @@ edgelabels.append('textPath')
   node.append("title")
       .text(function(d) { return d.label; });
 
+	theZoom(svg);
+	  
   simulation
       .nodes(graph.nodes)
       .on("tick", ticked);
@@ -244,6 +262,7 @@ edgelabels.append('textPath')
       .links(graph.links);
 
  
+  
   function ticked() {
 
     link.attr('d', function (d) {
@@ -325,6 +344,8 @@ function dragended(d) {
   d.fx = d.x;
   d.fy = d.y;
 }
+
+
 
 function draw(){
         // Extract the width and height that was computed by CSS.
@@ -418,6 +439,10 @@ function ClearSingleField() {
 	document.getElementById("relationship").innerHTML = "";
 }		
 
+function zoomed() {
+    d3.select(".otherg").attr("transform", d3.event.transform);
+  }
+
 function UpdateBox(string, d, graph){
 
 	d3.select(string).attr("value", d.label)
@@ -440,9 +465,11 @@ function UpdateBox(string, d, graph){
 			}
 		
 		}
-		//figure out source, target, and get relationship to put to "#relationship" div
+		
 		}
 } //end updatebox function
+
+
 		
 </script>
 
