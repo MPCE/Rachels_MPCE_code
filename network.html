@@ -41,10 +41,12 @@ border-style: solid;
 		<div class = "col-md-3">
 			<div>Get all</div>
 			<div class = "row">
-			<div class = "col-md-8"><input style= "background-color: yellow" id = "getbox" filled = "false" value = ""></input></div>
+			<div class = "col-md-8"><input style= "background-color: yellow" id = "getbox" filled = "false" ></input></div>
 			<div class = "col-md-4"><button type = "button" onclick ="ClearFields();" id = "reset_getbox">reset</button></div>
 			</div>
-			<div>that </div><div id = "relationship"></div>
+			<div class = "row">
+			<div class = "col-md-6">that </div><div class = "col-md-6" id = "relationship"></div>
+			</div>
 			<div class = "row">
 			<div class = "col-md-8">
 			<input id = "wherebox" filled = "false"></input></div>
@@ -118,10 +120,10 @@ var gLink = svg.append("g");
 	.attr("id", d => d.dom_id)
 	.on("click", function(d){
 	if(d3.select("#getbox").attr("filled")==="false"){
-		UpdateBox("#getbox", d);
+		UpdateBox("#getbox", d, graph);
 		}
 	else if (d3.select("#wherebox").attr("filled")==="false"){
-		UpdateBox("#wherebox", d);
+		UpdateBox("#wherebox", d, graph);
 		}
 	})
     .call(d3.drag()
@@ -370,24 +372,39 @@ function ClearFields() {
 		.style("background-color", "yellow");
 	d3.select("#wherebox").attr("value", "")
 		.attr("filled", "false");
+	document.getElementById("relationship").innerHTML = "";
+	
 }		
 
 function ClearSingleField() {
 	d3.select("#wherebox").attr("value", "")
 		.attr("filled", "false")
 		.style("background-color", "yellow"); 
+	document.getElementById("relationship").innerHTML = "";
 }		
 
-function UpdateBox(string, d){
+function UpdateBox(string, d, graph){
 
 	d3.select(string).attr("value", d.label)
+		.attr("lookupvalue", d.id)
 		.attr("filled", "true")
 		.style("background-color","white");
 	if(string==="#getbox"){
 		d3.select("#wherebox").style("background-color", "yellow");
 		} //end if
-	if(string==="#wherebox"){
-	
+	if(string==="#wherebox"){ //can probably do this whole thing in much more "d3-ish" way instead of cycling through the json. Bind the links to the div or something?
+		var source = d3.select("#getbox").attr("lookupvalue");
+		var target = d3.select("#wherebox").attr("lookupvalue");
+		for(let i =0; i<graph.links.length; i++){
+
+		if(graph.links[i].source.id.toLowerCase() === source.toLowerCase() && graph.links[i].target.id.toLowerCase() === target.toLowerCase())
+			{
+				
+				document.getElementById("relationship").innerHTML = graph.links[i].label;
+				
+			}
+		
+		}
 		//figure out source, target, and get relationship to put to "#relationship" div
 		}
 } //end updatebox function
