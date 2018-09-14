@@ -118,6 +118,31 @@ var gLink = svg.append("g");
       d.dom_id = "node-" + d.id;
 	  })
 	.attr("id", d => d.dom_id)
+	.on("mouseover", function(d){
+		d3.select(this) //  turns this circle's outline blue
+			.style("stroke", "blue");
+	  //gets other connected nodes and makes blue 
+		for(let i = 0; i<graph.links.length; i++){
+			if (d.id===graph.links[i].source.id){
+				d3.select(`#node-${graph.links[i].target.id}`).style("stroke", "blue");
+				console.log(`#link-${d.id}`);
+				//turn the lines blue too
+				d3.selectAll(`.${d.dom_id.replace(/node-/, "link-")}`).style(
+        "stroke","blue");
+			}
+		}
+	//fade out other stuff	
+	
+	})
+	.on("mouseout", function(d){
+	d3.select(this)
+		.style("stroke", "black");
+	g.selectAll("circle").style("stroke", "black");
+	 link.style("stroke", d => {
+		return d3.select(`#node-${d.source.id}`).attr("node_colour");
+		});
+	})
+	
 	.on("click", function(d){
 	if(d3.select("#getbox").attr("filled")==="false"){
 		UpdateBox("#getbox", d, graph);
@@ -137,7 +162,12 @@ var link = gLink.attr("class", "links")
     .selectAll("path")
     .data(graph.links)
     .enter().append("path")
+	.attr("id", "linkpath")
 	.style("stroke-width", chartDiv.clientWidth/300)
+	.attr("class", d => {
+		//console.log(`link-${d.source}`);
+      return `link-${d.source}`;
+    })
 //	.style("stroke-opacity", .6)
 	;
 //define the link colours and arrows
@@ -146,17 +176,22 @@ var link = gLink.attr("class", "links")
   })
   .attr('marker-end', function(d) {return marker(d3.select(`#node-${d.source}`).attr("node_colour"))})
   ;
+
+
 		  
 //define and add the labels for NODES
 var label = g.selectAll(".mytext")
 	.data(graph.nodes)
     .enter()
     .append("text")
+	.attr("id", function(d){ return d.id;})
     .text(function (d) { return d.label; })
     .style("text-anchor", "middle")
     .style("fill", "white")
 	.style("font-size", function(d) { 
           return d.radius*2 / this.getComputedTextLength()*10 + "px"; });
+		  
+		  
 
 	//define content of link labels
 link.append("title")
