@@ -40,11 +40,18 @@ border-style: solid;
 		
 		<div class = "col-md-3">
 			<div>Get all</div>
-			<input style= "background-color: yellow" id = "getbox"></input>
-			<div>Where</div>
-			<input id = "wherebox"></input> 
+			<div class = "row">
+			<div class = "col-md-8"><input style= "background-color: yellow" id = "getbox" filled = "false" value = ""></input></div>
+			<div class = "col-md-4"><button type = "button" onclick ="ClearFields();" id = "reset_getbox">reset</button></div>
+			</div>
+			<div>that </div><div id = "relationship"></div>
+			<div class = "row">
+			<div class = "col-md-8">
+			<input id = "wherebox" filled = "false"></input></div>
+			<div class = "col-md-4"><button type = "button" onclick ="ClearSingleField();" id = "reset_getbox">reset</button></div>
+			</div> 
 			<div>=</div> 
-			<select id = "selection"><option></option></select>
+			<select id = "selection" filled="false"><option></option></select>
 			</div>
 		</div>
 	</div>
@@ -54,6 +61,8 @@ border-style: solid;
 
 <script src="d3.js"></script>
 <script>
+
+var boxes = ["#getbox", "#wherebox"];
 var colour = d3.scaleOrdinal(d3.schemeCategory10);
 var chartDiv= document.getElementById("chart");
 var svg = d3.select(chartDiv).append("svg");
@@ -107,6 +116,14 @@ var gLink = svg.append("g");
       d.dom_id = "node-" + d.id;
 	  })
 	.attr("id", d => d.dom_id)
+	.on("click", function(d){
+	if(d3.select("#getbox").attr("filled")==="false"){
+		UpdateBox("#getbox", d);
+		}
+	else if (d3.select("#wherebox").attr("filled")==="false"){
+		UpdateBox("#wherebox", d);
+		}
+	})
     .call(d3.drag()
           .on("start", dragstarted)
           .on("drag", dragged)
@@ -346,7 +363,34 @@ function get_pathlength(data){
       return Math.sqrt((diffX * diffX) + (diffY * diffY));
 	  }
 
-		
+function ClearFields() {
+
+	d3.select("#getbox").attr("value", "")
+		.attr("filled", "false")
+		.style("background-color", "yellow");
+	d3.select("#wherebox").attr("value", "")
+		.attr("filled", "false");
+}		
+
+function ClearSingleField() {
+	d3.select("#wherebox").attr("value", "")
+		.attr("filled", "false")
+		.style("background-color", "yellow"); 
+}		
+
+function UpdateBox(string, d){
+
+	d3.select(string).attr("value", d.label)
+		.attr("filled", "true")
+		.style("background-color","white");
+	if(string==="#getbox"){
+		d3.select("#wherebox").style("background-color", "yellow");
+		} //end if
+	if(string==="#wherebox"){
+	
+		//figure out source, target, and get relationship to put to "#relationship" div
+		}
+} //end updatebox function
 		
 </script>
 
