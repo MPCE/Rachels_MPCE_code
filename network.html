@@ -27,6 +27,17 @@ border-style: solid;
 	background-color: black;
       }
 
+div.tooltip {	
+    position: absolute;			
+    text-align: center;			
+    width: 200px;					
+    padding: 2px;				
+    font: 12px sans-serif;		
+    background: lightsteelblue;	
+    border: 0px;		
+    border-radius: 8px;			
+    pointer-events: none;			
+}
 
 </style>
 </head>
@@ -54,7 +65,16 @@ border-style: solid;
 			</div> 
 			<div>&mdash;specifically</div> 
 			<select id = "selection" filled="false"><option></option></select>
-			</div>
+			
+			
+			<div class = "row">
+			<div class = "col-md-6"></div>
+		<div class = "col-md-6"><button type = "button" onclick ="getCode();" id = "get_code" style="float: right;" "vertical-align: bottom;">get code</button></div>
+		
+		</div>
+		
+		</div>
+		
 		</div>
 	</div>
 </div>
@@ -87,18 +107,55 @@ const theZoom = d3.zoom()
 
 var simulation = d3.forceSimulation()
     .force("link", d3.forceLink().id(function(d) { return d.id; }))
-    .force("charge", d3.forceManyBody().strength(radius*-150))
+    .force("charge", d3.forceManyBody().strength(radius*-200))
     .force("center", d3.forceCenter(width / 2, height / 2))
 	.force('collision', d3.forceCollide().radius(function(d) {
     return d.radius
   }))
  ;
 
-d3.json("graph.json").then(function(graph) {
+ // Define the div for the tooltip
+var div = d3.select("body").append("div")	
+    .attr("class", "tooltip")				
+    .style("opacity", 0);
 
+d3.json("newgraph.json").then(function(graph) {
+
+//want to get each source and target in the links and check it against the nodes to see if it really does exist.
+/*
+var nonmatches = [];
+for(let link = 0; link< graph.links.length; link++) //for each link item
+{
+	source_success = false;
+	target_success = false;
+	
+	for(let node = 0; node < graph.nodes.length; node++) //check against each node item.
+	{
+		if(graph.links[link].source === graph.nodes[node].id)
+		{		//for source
+		console.log("link " + link + ": source is matched with node " + node);
+		source_success = true;
+		}
+	
+		if(graph.links[link].target === graph.nodes[node].id){ //for target
+		console.log("link " + link + ": target is matched with node " + node);
+		target_success = true;}
+	}
+	if((source_success ===false) || (target_success ===false)){
+	console.log("Link " + link + ": No match");
+	nonmatches.push(graph.links[link]);
+	}
+
+}
+console.log("Length is: " + nonmatches.length);
+for(i=0; i<nonmatches.length; i++){
+	console.log(nonmatches[i])
+}
+
+//now we can move on.
+*/
 var gLink = svg.append("g").attr("id", "gLink");
 
- 
 
 	var g = svg.append("g").attr("id", "otherg");
 	
@@ -125,14 +182,21 @@ var gLink = svg.append("g").attr("id", "gLink");
 	  })
 	.attr("id", d => d.dom_id)
 	.on("mouseover", function(d){
+	//tooltips
+			div.transition()		
+                .duration(200)		
+                .style("opacity", .9);		
+            div.html("<b>" +d.label + "</b><br/>"  + d.description)	
+                .style("left", (d3.event.pageX) + "px")		
+                .style("top", (d3.event.pageY - 28) + "px");	
 		//makes all (other) circles gray
 		d3.selectAll("circle").style("fill", "dimgray");
 		d3.select(this) //  turns this circle's outline blue
 			.style("stroke", "blue").style("fill", function(d){return d3.schemeCategory10[d.group]});
 		
 		//make links gray
-		link.style("stroke", "gray").style("opacity", 0.3);
-			
+		link.style("stroke", "gray").style("opacity", 0.3).attr('marker-end', "gray"); //makes arrows gray
+  		
 	  //gets other connected nodes and makes blue 
 		for(let i = 0; i<graph.links.length; i++){
 			if (d.id===graph.links[i].source.id){
@@ -148,12 +212,17 @@ var gLink = svg.append("g").attr("id", "gLink");
 	
 	})
 	.on("mouseout", function(d){
+	//get rid of tooltip
+	div.transition()		
+                .duration(500)		
+                .style("opacity", 0);	
+	//set the colours back to normal			
 	d3.select(this)
 		.style("stroke", "black");
 	g.selectAll("circle").style("stroke", "black").style("fill", function(d){return d3.schemeCategory10[d.group]});
 	 link.style("stroke", d => {
 		return d3.select(`#node-${d.source.id}`).attr("node_colour");
-		}).style("opacity", 1);
+		}).style("opacity", 1).attr('marker-end', function(d) {return marker(d3.select(`#node-${d.source.id}`).attr("node_colour"))});
 	})
 	
 	.on("click", function(d){
@@ -162,6 +231,8 @@ var gLink = svg.append("g").attr("id", "gLink");
 		}
 	else if (d3.select("#wherebox").attr("filled")==="false"){
 		UpdateBox("#wherebox", d, graph);
+		//then populate the dropdown if possible
+		populateDropdown(d, graph);
 		}
 	})
 	.on("mousedown", () => d3.event.stopPropagation)
@@ -177,7 +248,7 @@ var link = gLink.attr("class", "links")
     .data(graph.links)
     .enter().append("path")
 	.attr("id", "linkpath")
-	.style("stroke-width", chartDiv.clientWidth/300)
+	.style("stroke-width", chartDiv.clientWidth/150)
 	.attr("class", d => {
 		//console.log(`link-${d.source}`);
       return `link-${d.source}`;
@@ -209,7 +280,7 @@ var label = g.selectAll(".mytext")
 
 	//define content of link labels
 link.append("title")
-	.text(function(d) {return d.label});
+	.text(function(d) {return  d.label + ": " + d.definition});
 	
 
 
@@ -431,6 +502,20 @@ function ClearFields() {
 	document.getElementById("relationship").innerHTML = "";
 	
 }		
+
+function populateDropdown(d, graph) {
+
+var select = document.getElementById("selection");
+
+	if(d.data != null){
+		for(let i = 0; i< d.data.length; i++){
+		var option = document.createElement('option');
+		option.text = option.value = d.data[i];
+		select.add(option,0);
+		}
+	}
+
+}
 
 function ClearSingleField() {
 	d3.select("#wherebox").attr("value", "")
